@@ -23,13 +23,16 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 _velocity;
 
     //animator bools/states
-    private bool _isCrouching;
+    public bool IsCrouching;
     private bool _isRunning;
-    private bool _isRolling;
+    public bool IsRolling;
+
+    private float _rollTimer;
+    private float rollVel;
 
     void Awake()
     {
-        _animator = GetComponent<Animator>();
+       // _animator = GetComponent<Animator>();
         _controller = GetComponent<CharacterController2D>();
         _collider = GetComponent<BoxCollider2D>();
 
@@ -37,6 +40,10 @@ public class PlayerMovement : MonoBehaviour
         _controller.onControllerCollidedEvent += onControllerCollider;
         _controller.onTriggerEnterEvent += onTriggerEnterEvent;
         _controller.onTriggerExitEvent += onTriggerExitEvent;
+    }
+
+    void Start()
+    {
     }
 
 
@@ -49,7 +56,7 @@ public class PlayerMovement : MonoBehaviour
             return;
 
         // logs any collider hits if uncommented. it gets noisy so it is commented out for the demo
-        //   Debug.Log("flags: " + _controller.collisionState + ", hit.normal: " + hit.normal);
+         //  Debug.Log("flags: " + _controller.collisionState + ", hit.normal: " + hit.normal);
     }
 
 
@@ -70,18 +77,22 @@ public class PlayerMovement : MonoBehaviour
     // the Update loop contains a very simple example of moving the character around and controlling the animation
     void Update()
     {
+        
         BasicMovement();
+        Roll();
+        Crouch();
 
-        #region Animators
+      /*  #region Animators
         _animator.SetBool("Running", _isRunning);
         _animator.SetBool("Crouching", _isCrouching);
         _animator.SetBool("Rolling", _isRolling);
-        #endregion
+        #endregion*/
 
         _controller.move(_velocity * Time.deltaTime);
 
         // grab our current _velocity to use as a base for all calculations
         _velocity = _controller.velocity;
+
     }
 
     void BasicMovement()
@@ -90,22 +101,13 @@ public class PlayerMovement : MonoBehaviour
             _velocity.y = 0;
 
         normalizedHorizontalSpeed = Input.GetAxis("Horizontal");
-        if (normalizedHorizontalSpeed > 0)
+        if (normalizedHorizontalSpeed > 0 && !IsRolling)
         {
             transform.localScale = new Vector3(1, transform.localScale.y, transform.localScale.z);
         }
-        else if (normalizedHorizontalSpeed < 0)
+        else if (normalizedHorizontalSpeed < 0 && !IsRolling)
         {
             transform.localScale = new Vector3(-1, transform.localScale.y, transform.localScale.z);
-        }
-
-        if (Mathf.Abs(normalizedHorizontalSpeed) > 0)
-        {
-            _isRunning = true;
-        }
-        else
-        {
-            _isRunning = false;
         }
 
         // we can only jump whilst grounded
@@ -131,5 +133,59 @@ public class PlayerMovement : MonoBehaviour
 
     void Roll()
     {
+        RaycastHit2D upRay = Physics2D.Raycast(transform.position, new Vector2(0, 1), 1f, LayerMask.GetMask("Ground"));
+
+        if (Input.GetButtonDown("Crouch") && Mathf.Abs(normalizedHorizontalSpeed) > 0)
+        {
+            _collider.size = new Vector3(1, 1);
+            _controller.recalculateDistanceBetweenRays();
+            rollVel = _velocity.x;
+            IsRolling = true;
+        }
+
+        if (IsRolling)
+        {
+            _velocity.x = rollVel;
+            _rollTimer += Time.deltaTime;
+            if(_rollTimer >= 0.7f)
+            {
+                if(Input.GetButton("Crouch") || upRay.collider != null)
+                {
+                    runSpeed *= 0.5f;
+                    IsCrouching = true;
+                }
+                else if (!Input.GetButton("Crouch"))
+                {
+                    _collider.size = new Vector3(1, 2);
+                    transform.Translate(new Vector3(0, 0.5f));
+                    _controller.recalculateDistanceBetweenRays();
+                }
+                IsRolling = false;
+                _rollTimer = 0f;
+            }
+        }
     }
+
+    void Crouch()
+    {
+        RaycastHit2D upRay = Physics2D.Raycast(transform.position, new Vector2(0, 1), 1f, LayerMask.GetMask("Ground"));
+
+        if (Input.GetButtonDown("Crouch") && Mathf.Abs(normalizedHorizontalSpeed) < 0.1 && !IsRolling)
+        {
+            _collider.size = new Vector3(1, 1);
+            _controller.recalculateDistanceBetweenRays();
+            runSpeed *= 0.5f;
+            IsCrouching = true;
+        }
+        else if (!Input.GetButton("Crouch") && !IsRolling && upRay.collider == null && IsCrouching)
+        {
+            _collider.size = new Vector3(1, 2);
+            transform.Translate(new Vector3(0, 0.5f));
+            _controller.recalculateDistanceBetweenRays();
+            runSpeed *= 2f;
+            IsCrouching = false;
+        }
+
+    }
+
 }
