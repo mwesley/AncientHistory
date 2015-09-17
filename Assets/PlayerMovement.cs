@@ -111,7 +111,8 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // we can only jump whilst grounded
-        if (_controller.isGrounded && Input.GetButtonDown("Jump"))
+        Debug.Log("physics" + _controller.isGrounded + " " + Input.GetButtonDown("Jump"));
+        if (_controller.isGrounded && Input.GetButtonDown("Jump") && !IsRolling)
         {
             _velocity.y = Mathf.Sqrt(2f * jumpHeight * -gravity);
         }
@@ -151,16 +152,17 @@ public class PlayerMovement : MonoBehaviour
             {
                 if(Input.GetButton("Crouch") || upRay.collider != null)
                 {
-                    runSpeed *= 0.5f;
+                    runSpeed = 4f;
                     IsCrouching = true;
+                    IsRolling = false;
                 }
-                else if (!Input.GetButton("Crouch"))
+                else if (!Input.GetButton("Crouch") && _controller.isGrounded)
                 {
                     _collider.size = new Vector3(1, 2);
                     transform.Translate(new Vector3(0, 0.5f));
                     _controller.recalculateDistanceBetweenRays();
+                    IsRolling = false;
                 }
-                IsRolling = false;
                 _rollTimer = 0f;
             }
         }
@@ -174,7 +176,7 @@ public class PlayerMovement : MonoBehaviour
         {
             _collider.size = new Vector3(1, 1);
             _controller.recalculateDistanceBetweenRays();
-            runSpeed *= 0.5f;
+            runSpeed = 4f;
             IsCrouching = true;
         }
         else if (!Input.GetButton("Crouch") && !IsRolling && upRay.collider == null && IsCrouching)
@@ -182,7 +184,7 @@ public class PlayerMovement : MonoBehaviour
             _collider.size = new Vector3(1, 2);
             transform.Translate(new Vector3(0, 0.5f));
             _controller.recalculateDistanceBetweenRays();
-            runSpeed *= 2f;
+            runSpeed = 8f;
             IsCrouching = false;
         }
 

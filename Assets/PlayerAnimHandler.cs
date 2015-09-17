@@ -40,7 +40,7 @@ public class PlayerAnimHandler : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        Debug.Log("anim" + _controller.isGrounded + " " + Input.GetButtonDown("Jump"));
         if (_controller.isGrounded && Input.GetButtonDown("Jump"))
         {
             ChangeState(STATE_JUMPING);
@@ -65,7 +65,7 @@ public class PlayerAnimHandler : MonoBehaviour
         {
             ChangeState(STATE_IDLE);
         }
-
+        Debug.Log(_currentAnimationState);
     }
 
     void ChangeState(int state)
