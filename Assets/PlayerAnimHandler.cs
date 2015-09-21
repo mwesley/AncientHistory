@@ -9,10 +9,6 @@ public class PlayerAnimHandler : MonoBehaviour
     private PlayerMovement _movementScript;
     private CharacterController2D _controller;
 
-    //flags to check animations
-    bool _isPlayer_moving;
-    bool _isPlayer_idle;
-
     //animation states
     const int STATE_IDLE = 0;
     const int STATE_RUNNING = 1;
@@ -20,6 +16,7 @@ public class PlayerAnimHandler : MonoBehaviour
     const int STATE_CROUCHING = 3;
     const int STATE_CRAWLING = 4;
     const int STATE_ROLLING = 5;
+    const int STATE_ATTACKONE = 6;
 
     int _currentAnimationState = STATE_IDLE;
 
@@ -40,8 +37,15 @@ public class PlayerAnimHandler : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log("anim" + _controller.isGrounded + " " + Input.GetButtonDown("Jump"));
-        if (_controller.isGrounded && Input.GetButtonDown("Jump"))
+
+        if(_currentAnimationState == STATE_ATTACKONE)
+        {
+            if(_animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1)
+            {
+                ChangeState(STATE_IDLE);
+            }
+        }
+        else if (_controller.isGrounded && Input.GetButtonDown("Jump"))
         {
             ChangeState(STATE_JUMPING);
         }
@@ -61,11 +65,14 @@ public class PlayerAnimHandler : MonoBehaviour
         {
             ChangeState(STATE_RUNNING);
         }
+        else if (_controller.isGrounded && Input.GetButtonDown("Attack"))
+        {
+            ChangeState(STATE_ATTACKONE);
+        }
         else if (_controller.isGrounded)
         {
             ChangeState(STATE_IDLE);
         }
-        Debug.Log(_currentAnimationState);
     }
 
     void ChangeState(int state)
@@ -97,6 +104,10 @@ public class PlayerAnimHandler : MonoBehaviour
 
             case STATE_ROLLING:
                 _animator.SetInteger("state", STATE_ROLLING);
+                break;
+
+            case STATE_ATTACKONE:
+                _animator.SetInteger("state", STATE_ATTACKONE);
                 break;
         }
 

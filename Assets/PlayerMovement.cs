@@ -81,6 +81,7 @@ public class PlayerMovement : MonoBehaviour
         BasicMovement();
         Roll();
         Crouch();
+        Attack();
 
       /*  #region Animators
         _animator.SetBool("Running", _isRunning);
@@ -175,6 +176,7 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetButtonDown("Crouch") && Mathf.Abs(normalizedHorizontalSpeed) < 0.1 && !IsRolling)
         {
             _collider.size = new Vector3(1, 1);
+            transform.Translate(new Vector3(0, -0.5f));
             _controller.recalculateDistanceBetweenRays();
             runSpeed = 4f;
             IsCrouching = true;
@@ -189,5 +191,24 @@ public class PlayerMovement : MonoBehaviour
         }
 
     }
+
+    void Attack()
+    {
+        if (Input.GetButtonDown("Attack"))
+        {
+            int layerMask = 1 << 9;
+            layerMask = ~layerMask;
+            float x = transform.localScale.x;
+            RaycastHit2D attackRayUp = Physics2D.Raycast(transform.position, new Vector2(x, 0.5f), 2f, layerMask);
+            RaycastHit2D attackRayDown = Physics2D.Raycast(transform.position, new Vector2(x, -0.5f), 2f, layerMask);
+            RaycastHit2D attackRayStraight = Physics2D.Raycast(transform.position, new Vector2(x, 0f), 2f, layerMask);
+            if(attackRayDown.collider != null || attackRayStraight.collider != null || attackRayUp.collider != null)
+            {
+                Debug.Log("Hit recognised!");
+            }
+        }
+
+    }
+
 
 }
